@@ -200,7 +200,7 @@
 
     olms.apply(map, styleJson);
 
-    fetch('/data/santander.geojson') 
+    fetch('data/santander.geojson') 
       .then(response => response.json())
       .then(data => {
         const vectorSource = new ol.source.Vector({
