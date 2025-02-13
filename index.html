@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.1.0/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@v10.1.0/dist/ol.js"></script>
+  <script src="https://unpkg.com/ol-mapbox-style@12.1.1/dist/olms.js"></script>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background: #EB5757;  
+        background: -webkit-linear-gradient(to right, #000000, #EB5757);  
+        background: linear-gradient(to right, #000000, #EB5757); 
+        overflow: hidden;
+    }
+
+    /* Estilos para el contenedor del mapa */
+    .map-container {
+      border: 5px solid #333;  
+      border-radius: 10px;     
+      padding: 10px;           
+      width: 60%;              
+      height: calc(90vh - 10vh); /* Altura ajustada */
+      background-color: #e7e7d2;  
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+      justify-content: center; 
+      align-items: center; 
+    }
+
+    #map {
+      width: 100%;  /* El mapa ocupa todo el contenedor */
+      height: 100%; /* El mapa ocupa todo el contenedor */
+    }
+
+    /* El estilo del popup */
+    #info {
+      position: absolute;
+      background-color: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 999;
+      max-width: 250px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      pointer-events: none; /* Prevent interaction with the popup */
+    }
+
+    /* Estilos para el modal */
+    .modal {
+      opacity: 0;
+      visibility: hidden;
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      text-align: left;
+      background: rgba(0, 0, 0, .9);
+      transition: opacity .25s ease;
+    }
+
+    .modal__bg {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      cursor: pointer;
+    }
+
+    .modal-state {
+      display: none;
+    }
+
+    .modal-state:checked + .modal {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-state:checked + .modal .modal__inner {
+      top: 0;
+    }
+
+    .modal__inner {
+      transition: top .25s ease;
+      position: absolute;
+      top: -20%;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      width: 50%;
+      margin: auto;
+      overflow: auto;
+      background: #fff;
+      border-radius: 5px;
+      padding: 1em 2em;
+      height: 50%;
+    }
+
+    .modal__close {
+      position: absolute;
+      right: 1em;
+      top: 1em;
+      width: 1.1em;
+      height: 1.1em;
+      cursor: pointer;
+    }
+
+    .modal__close:after,
+    .modal__close:before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 1.5em;
+      background: #ccc;
+      display: block;
+      transform: rotate(45deg);
+      left: 50%;
+      margin: -3px 0 0 -1px;
+      top: 0;
+    }
+
+    .modal__close:hover:after,
+    .modal__close:hover:before {
+      background: #aaa;
+    }
+
+    .modal__close:before {
+      transform: rotate(-45deg);
+    }
+
+    /* Estilos para el footer con tu nombre */
+    footer {
+      text-align: center;
+      color: white;
+      margin-top: 700px;
+      margin-left: -300px;
+      width: 20%;
+      font-size: 15px;
+      font-weight: bold;
+      font-family: Arial, sans-serif;
+    }
+
+    #demotext {
+        color: #FFFFFF;    
+        text-shadow: 0 -1px 4px #FFF, 0 -2px 10px #ff0, 0 -10px 20px #ff8000, 0 -18px 40px #F00;
+        color: #FFFFFF;        
+        }
+        
+  </style>
+</head>
+<body>
+  <!-- Contenedor del mapa con borde -->
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+
+  <!-- Créditos debajo del mapa -->
+  <footer>
+    <p id="demotext">Ing SIG. Jonathan A. Estupiñán Garnica</p>
+  </footer>
+
+  <!-- Modal para mostrar la información -->
+  <input class="modal-state" id="modal-1" type="checkbox" />
+  <div class="modal">
+    <label class="modal__bg" for="modal-1"></label>
+    <div class="modal__inner">
+      <label class="modal__close" for="modal-1"></label>
+      <h2>Información del Municipio</h2>
+      <p id="modal-content"></p>
+    </div>
+  </div>
+
+  <script>
+    const key = 'xK4Vig2knwjgDpd13IyI';
+    const styleJson = `https://api.maptiler.com/maps/d610e22f-9a6f-4817-8446-e42660139347/style.json?key=${key}`;
+
+    const attribution = new ol.control.Attribution({
+      collapsible: false,
+    });
+
+    const map = new ol.Map({
+      target: 'map',
+      controls: ol.control.defaults.defaults({attribution: false}).extend([attribution]),
+      view: new ol.View({
+        constrainResolution: true,
+        center: ol.proj.fromLonLat([-73.1134, 7.1009]),
+        zoom: 8,
+        minZoom: 6,
+        maxZoom: 15,
+      })
+    });
+
+    olms.apply(map, styleJson);
+
+    fetch('/data/santander.geojson') 
+      .then(response => response.json())
+      .then(data => {
+        const vectorSource = new ol.source.Vector({
+          features: new ol.format.GeoJSON().readFeatures(data, {
+            featureProjection: 'EPSG:3857'
+          })
+        });
+
+        const vectorLayer = new ol.layer.Vector({
+          source: vectorSource,
+          style: function(feature) {
+            return new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: '#7b8a3f',
+                width: 1
+              }),
+              fill: new ol.style.Fill({
+                color: 'rgba(224, 224, 202, 0.3)'
+              })
+            });
+          }
+        });
+
+        map.addLayer(vectorLayer);
+
+        map.on('click', function(evt) {
+          const coordinate = evt.coordinate;
+          const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
+            return feature;
+          });
+        if (feature) {
+          const municipio = feature.get('MPIO_CNMBR');
+          const area = feature.get('Sup_Km2');
+
+          // Redondear el área a dos decimales
+          const areaRedondeada = (Math.round(area * 100) / 100).toFixed(2);
+
+          // Separar los miles y colocar el punto como separador de miles
+          const [integer, decimal] = areaRedondeada.split('.');
+          const integerWithCommas = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          
+          const areaFormatted = `${integerWithCommas},${decimal}`;
+
+          const modalContent = document.getElementById('modal-content');
+          modalContent.innerHTML = `<strong>Municipio:</strong> ${municipio}<br><strong>Área:</strong> ${areaFormatted} km²`;
+          document.getElementById('modal-1').checked = true;
+        }
+
+
+        });
+      })
+      .catch(error => console.error('Error al cargar el archivo JSON:', error));
+  </script>
+</body>
+</html>
