@@ -46,6 +46,23 @@
       height: 100%; /* El mapa ocupa todo el contenedor */
     }
 
+    /* Media Queries para dispositivos móviles */
+    @media (max-width: 768px) {
+        .map-container {
+            width: 95%; /* Aumenta el ancho en dispositivos pequeños */
+            height: 70vh; /* Reduce la altura en dispositivos pequeños */
+        }
+    }
+
+    @media (max-width: 480px) {
+        .map-container {
+            width: 100%; /* Ocupa todo el ancho en móviles */
+            height: 60vh; /* Ajusta la altura para móviles */
+            padding: 5px; /* Reduce el padding */
+        }
+    }
+    
+
     /* El estilo del popup */
     #info {
       position: absolute;
@@ -147,15 +164,33 @@
 
     /* Estilos para el footer con tu nombre */
     footer {
-      text-align: center;
-      color: white;
-      margin-top: 700px;
-      margin-left: -300px;
-      width: 20%;
-      font-size: 15px;
-      font-weight: bold;
-      font-family: Arial, sans-serif;
+    text-align: center;
+    color: white;
+    width: 100%; /* Ocupa todo el ancho disponible */
+    padding: 10px 0; /* Espaciado interno (arriba y abajo) */
+    font-size: 15px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    position: fixed; /* Fija el footer en la parte inferior */
+    bottom: 0; /* Lo coloca en la parte inferior */
+    left: 0; /* Lo alinea a la izquierda */
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+}
+
+/* Media Queries para ajustar el footer en diferentes dispositivos */
+@media (max-width: 768px) {
+    footer {
+        font-size: 13px; /* Reducir el tamaño de la fuente en tablets */
+        padding: 10px 0; /* Reducir el espaciado */
     }
+}
+
+@media (max-width: 480px) {
+    footer {
+        font-size: 12px; /* Reducir más el tamaño de la fuente en móviles */
+        padding: 10px 0; /* Reducir más el espaciado */
+    }
+}
 
     #demotext {
         color: #FFFFFF;    
